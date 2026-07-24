@@ -1,0 +1,1 @@
+# handwriting_detection_mnist
