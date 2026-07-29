@@ -1,6 +1,6 @@
 """
 Streamlit-App: Handschrifterkennung mit MNIST
-==============================================
+=============================================
 MNIST-Daten erkunden, Modell trainieren, Vorhersagen visualisieren, Fehleranalyse.
 """
 
@@ -10,290 +10,299 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import confusion_matrix, classification_report
-from pathlib import Path
 import sys
+import os
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, os.path.dirname(__file__))
 from mnist_analysis import load_mnist, plot_samples, plot_confusion, plot_misclassified
 
-st.set_page_config(page_title="Handschrifterkennung MNIST", page_icon="✍️", layout="wide")
+st.set_page_config(page_title="Handschrifterkennung MNIST", layout="wide")
 st.title("✍️ Handschrifterkennung mit MNIST")
-st.markdown("MNIST-Daten erkunden, Modelle trainieren, Vorhersagen visualisieren & Fehler analysieren")
+st.markdown("### MNIST-Daten erkunden, trainieren, visualisieren & Fehler analysieren")
 
-page = st.sidebar.radio(
-    "Bereich wählen",
-    ["Daten erkunden", "Modell trainieren", "Vorhersagen", "Fehleranalyse"]
-)
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🔍 Daten erkunden", "🤖 Modell trainieren", "📊 Vorhersagen", "🔬 Fehleranalyse"
+])
 
-# ═══════════════════════════════════════════════════════════════════════════
-# DATEN ERKUNDEN
-# ═══════════════════════════════════════════════════════════════════════════
-if page == "Daten erkunden":
-    st.header("📸 MNIST-Daten erkunden")
+# ═══════════════════════════════════════════════════════════════
+# Session State für Daten & Modell
+# ═══════════════════════════════════════════════════════════════
+if 'data_loaded' not in st.session_state:
+    st.session_state.data_loaded = False
+if 'model_trained' not in st.session_state:
+    st.session_state.model_trained = False
 
-    @st.cache_data
-    def load_data():
-        return load_mnist()
+# ═══════════════════════════════════════════════════════════════
+# Tab 1: Daten erkunden
+# ═══════════════════════════════════════════════════════════════
+with tab1:
+    st.header("🔍 MNIST-Daten erkunden")
 
-    with st.spinner("Lade MNIST-Daten..."):
-        X_train, y_train, X_test, y_test = load_data()
+    if st.button("📦 MNIST-Daten laden", type="primary"):
+        with st.spinner("Lade MNIST-Datensatz (ca. 11 MB)..."):
+            X_train, y_train, X_test, y_test = load_mnist()
+            st.session_state.X_train = X_train
+            st.session_state.y_train = y_train
+            st.session_state.X_test = X_test
+            st.session_state.y_test = y_test
+            st.session_state.data_loaded = True
+        st.success("✅ Daten geladen!")
 
-    st.success(f"✅ Daten geladen: {X_train.shape[0]:,} Trainingsbilder, {X_test.shape[0]:,} Testbilder")
+    if st.session_state.data_loaded:
+        X_train = st.session_state.X_train
+        y_train = st.session_state.y_train
+        X_test = st.session_state.X_test
+        y_test = st.session_state.y_test
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Trainingsdaten", f"{X_train.shape[0]:,}")
-    with col2:
-        st.metric("Testdaten", f"{X_test.shape[0]:,}")
-    with col3:
-        st.metric("Bildgröße", "28×28 = 784 Pixel")
-    with col4:
-        st.metric("Klassen", "10 (Ziffern 0-9)")
+        col_a, col_b, col_c, col_d = st.columns(4)
+        col_a.metric("Trainingsbilder", f"{X_train.shape[0]:,}")
+        col_b.metric("Testbilder", f"{X_test.shape[0]:,}")
+        col_c.metric("Bildgröße", "28×28 = 784 Pixel")
+        col_d.metric("Klassen", "0–9 (10 Ziffern)")
 
-    st.subheader("Zufällige Trainingsbilder")
-    n_samples = st.slider("Anzahl Bilder", 5, 30, 10)
+        st.subheader("Klassenverteilung")
+        fig_dist, ax_dist = plt.subplots(figsize=(10, 4))
+        unique_train, counts_train = np.unique(y_train, return_counts=True)
+        unique_test, counts_test = np.unique(y_test, return_counts=True)
+        x_pos = np.arange(10)
+        width = 0.35
+        ax_dist.bar(x_pos - width/2, counts_train, width, label='Train', color='#4A90D9')
+        ax_dist.bar(x_pos + width/2, counts_test, width, label='Test', color='#50C878')
+        ax_dist.set_xlabel('Ziffer')
+        ax_dist.set_ylabel('Anzahl')
+        ax_dist.set_title('Klassenverteilung: Train vs. Test', fontweight='bold')
+        ax_dist.set_xticks(x_pos)
+        ax_dist.legend()
+        st.pyplot(fig_dist)
 
-    if st.button("Neue Bilder anzeigen"):
-        idx = np.random.choice(len(X_train), n_samples, replace=False)
-        n_cols = min(n_samples, 10)
-        n_rows = (n_samples + n_cols - 1) // n_cols
+        st.subheader("Zufällige Beispiele")
+        n_samples = st.slider("Anzahl Beispiele", 5, 50, 20)
+        fig_samples = plot_samples(X_train, y_train, n=n_samples)
+        st.pyplot(fig_samples)
 
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 1.5, n_rows * 1.5))
-        if n_rows == 1 and n_cols == 1:
-            axes = np.array([axes])
-        axes_flat = axes.flatten() if hasattr(axes, "flatten") else axes.flat
+        st.subheader("Einzelne Ziffern im Detail")
+        digit = st.selectbox("Ziffer auswählen", list(range(10)))
+        digit_indices = np.where(y_train == digit)[0]
+        n_show = min(25, len(digit_indices))
+        show_idx = np.random.choice(digit_indices, n_show, replace=False)
 
-        for i, ax in enumerate(axes_flat):
-            if i < n_samples:
-                ax.imshow(X_train[idx[i]].reshape(28, 28), cmap="gray")
-                ax.set_title(f"Label: {y_train[idx[i]]}", fontsize=10)
-            ax.axis("off")
+        fig_grid, axes_grid = plt.subplots(5, 5, figsize=(8, 8))
+        for i, ax in enumerate(axes_grid.flat):
+            if i < n_show:
+                ax.imshow(X_train[show_idx[i]].reshape(28, 28), cmap='gray')
+            ax.axis('off')
+        fig_grid.suptitle(f'Ziffer {digit} — {len(digit_indices):,} Beispiele im Trainingsset',
+                          fontweight='bold')
+        st.pyplot(fig_grid)
 
-        st.pyplot(fig)
+        st.subheader("Pixel-Intensitäts-Heatmap (Durchschnitt)")
+        digit_avg = st.selectbox("Ziffer für Heatmap", list(range(10)), key="heatmap_digit")
+        avg_img = X_train[y_train == digit_avg].mean(axis=0).reshape(28, 28)
+        fig_heat, ax_heat = plt.subplots(figsize=(6, 6))
+        im = ax_heat.imshow(avg_img, cmap='hot')
+        ax_heat.set_title(f'Durchschnittsbild: Ziffer {digit_avg}', fontweight='bold')
+        plt.colorbar(im, ax=ax_heat, label='Intensität')
+        st.pyplot(fig_heat)
 
-    st.subheader("Klassenverteilung")
-    fig, ax = plt.subplots(figsize=(10, 4))
-    unique, counts = np.unique(y_train, return_counts=True)
-    ax.bar(unique, counts, color="#4ECDC4", edgecolor="white")
-    ax.set_xlabel("Ziffer")
-    ax.set_ylabel("Anzahl")
-    ax.set_title("Verteilung der Ziffern im Trainingsdatensatz")
-    ax.set_xticks(unique)
-    for i, c in enumerate(counts):
-        ax.text(i, c + 50, str(c), ha="center", fontsize=9)
-    st.pyplot(fig)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# MODELL TRAINIEREN
-# ═══════════════════════════════════════════════════════════════════════════
-elif page == "Modell trainieren":
+# ═══════════════════════════════════════════════════════════════
+# Tab 2: Modell trainieren
+# ═══════════════════════════════════════════════════════════════
+with tab2:
     st.header("🤖 Modell trainieren")
 
-    @st.cache_data
-    def load_data():
-        return load_mnist()
+    if not st.session_state.data_loaded:
+        st.warning("⚠️ Bitte zuerst die Daten laden (Tab 1)!")
+    else:
+        st.subheader("Modell-Konfiguration")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            hidden1 = st.number_input("Hidden Layer 1", 16, 512, 128, step=16)
+        with col2:
+            hidden2 = st.number_input("Hidden Layer 2", 0, 512, 64, step=16)
+        with col3:
+            max_iter = st.slider("Max Iterationen", 5, 100, 20)
 
-    with st.spinner("Lade MNIST-Daten..."):
-        X_train, y_train, X_test, y_test = load_data()
+        hidden_layers = (hidden1, hidden2) if hidden2 > 0 else (hidden1,)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        hidden_layers = st.text_input("Hidden-Layer (z.B. 128,64)", "128,64")
-        activation = st.selectbox("Aktivierung", ["relu", "tanh", "logistic"])
-    with col2:
-        max_iter = st.slider("Max Iterationen", 5, 50, 20)
-        random_state = st.number_input("Random State", 0, 100, 42)
+        if st.button("🚀 Modell trainieren", type="primary"):
+            X_train = st.session_state.X_train
+            y_train = st.session_state.y_train
+            X_test = st.session_state.X_test
+            y_test = st.session_state.y_test
 
-    if st.button("Modell trainieren", type="primary"):
-        layers = tuple(int(x.strip()) for x in hidden_layers.split(","))
+            progress_bar = st.progress(0)
+            status_text = st.empty()
 
-        with st.spinner(f"Training MLPClassifier{layers}..."):
+            status_text.text("Trainiere MLPClassifier...")
             model = MLPClassifier(
-                hidden_layer_sizes=layers,
-                activation=activation,
-                solver="adam",
+                hidden_layer_sizes=hidden_layers,
+                activation='relu',
+                solver='adam',
                 max_iter=max_iter,
-                random_state=random_state,
+                random_state=42,
+                verbose=False,
             )
+
+            # Manuelles Training mit Progress
+            model.partial_fit = False  # nicht partial_fit nutzen
             model.fit(X_train, y_train)
 
-        train_acc = model.score(X_train, y_train)
-        test_acc = model.score(X_test, y_test)
-        y_pred = model.predict(X_test)
+            progress_bar.progress(100)
+            status_text.text("✅ Training abgeschlossen!")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Train-Accuracy", f"{train_acc:.4f}")
-        with col2:
-            st.metric("Test-Accuracy", f"{test_acc:.4f}")
+            train_acc = model.score(X_train, y_train)
+            test_acc = model.score(X_test, y_test)
+            y_pred = model.predict(X_test)
 
-        st.subheader("Confusion-Matrix")
-        cm = confusion_matrix(y_test, y_pred)
-        fig, ax = plt.subplots(figsize=(10, 8))
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax,
-                    xticklabels=range(10), yticklabels=range(10))
-        ax.set_xlabel("Vorhergesagt")
-        ax.set_ylabel("Tatsächlich")
-        ax.set_title("Confusion-Matrix")
-        st.pyplot(fig)
+            st.session_state.model = model
+            st.session_state.y_pred = y_pred
+            st.session_state.model_trained = True
+
+            col_r1, col_r2 = st.columns(2)
+            col_r1.metric("Train-Accuracy", f"{train_acc:.2%}")
+            col_r2.metric("Test-Accuracy", f"{test_acc:.2%}")
+
+            st.info(f"""
+            **Modell-Architektur:**
+            - Input: 784 Neuronen (28×28 Pixel)
+            - Hidden: {hidden_layers}
+            - Output: 10 Neuronen (Ziffern 0–9)
+            - Aktivierung: ReLU
+            - Optimizer: Adam
+            """)
+
+# ═══════════════════════════════════════════════════════════════
+# Tab 3: Vorhersagen
+# ═══════════════════════════════════════════════════════════════
+with tab3:
+    st.header("📊 Vorhersagen visualisieren")
+
+    if not st.session_state.model_trained:
+        st.warning("⚠️ Bitte zuerst das Modell trainieren (Tab 2)!")
+    else:
+        model = st.session_state.model
+        y_pred = st.session_state.y_pred
+        X_test = st.session_state.X_test
+        y_test = st.session_state.y_test
+
+        st.subheader("Confusion Matrix")
+        fig_cm = plot_confusion(y_test, y_pred, title="Confusion Matrix — MNIST")
+        st.pyplot(fig_cm)
 
         st.subheader("Classification Report")
         report = classification_report(y_test, y_pred, output_dict=True)
-        st.dataframe(report)
+        report_df = {
+            'Ziffer': [],
+            'Precision': [],
+            'Recall': [],
+            'F1-Score': [],
+            'Support': [],
+        }
+        for label in range(10):
+            key = str(label)
+            report_df['Ziffer'].append(label)
+            report_df['Precision'].append(f"{report[key]['precision']:.3f}")
+            report_df['Recall'].append(f"{report[key]['recall']:.3f}")
+            report_df['F1-Score'].append(f"{report[key]['f1-score']:.3f}")
+            report_df['Support'].append(int(report[key]['support']))
 
-# ═══════════════════════════════════════════════════════════════════════════
-# VORHERSAGEN
-# ═══════════════════════════════════════════════════════════════════════════
-elif page == "Vorhersagen":
-    st.header("🔮 Vorhersagen visualisieren")
+        import pandas as pd
+        st.dataframe(pd.DataFrame(report_df).set_index('Ziffer'), use_container_width=True)
 
-    @st.cache_data
-    def load_data():
-        return load_mnist()
-
-    @st.cache_resource
-    def train_model():
-        X_train, y_train, X_test, y_test = load_data()
-        model = MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=20, random_state=42)
-        model.fit(X_train, y_train)
-        return model, X_test, y_test
-
-    with st.spinner("Lade Daten & trainiere Modell..."):
-        model, X_test, y_test = train_model()
-
-    y_pred = model.predict(X_test)
-    test_acc = model.score(X_test, y_test)
-    st.metric("Test-Accuracy", f"{test_acc:.4f}")
-
-    st.subheader("Zufällige Test-Vorhersagen")
-    n_show = st.slider("Anzahl", 5, 20, 10)
-
-    if st.button("Neue Vorhersagen"):
+        st.subheader("Zufällige Vorhersagen")
+        n_show = st.slider("Anzahl Vorhersagen", 10, 100, 30, key="pred_slider")
         idx = np.random.choice(len(X_test), n_show, replace=False)
-        n_cols = min(n_show, 5)
-        n_rows = (n_show + n_cols - 1) // n_cols
 
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 2.5, n_rows * 2.5))
-        if n_rows == 1 and n_cols == 1:
-            axes = np.array([axes])
-        axes_flat = axes.flatten() if hasattr(axes, "flatten") else axes.flat
+        cols = 10
+        rows = (n_show + cols - 1) // cols
+        fig_pred, axes_pred = plt.subplots(rows, cols, figsize=(cols * 1.5, rows * 1.5))
+        axes_flat = axes_pred.flat if hasattr(axes_pred, 'flat') else [axes_pred]
 
         for i, ax in enumerate(axes_flat):
             if i < n_show:
                 img_idx = idx[i]
-                ax.imshow(X_test[img_idx].reshape(28, 28), cmap="gray")
-                true_label = y_test[img_idx]
-                pred_label = y_pred[img_idx]
-                color = "green" if true_label == pred_label else "red"
-                ax.set_title(f"True: {true_label} → Pred: {pred_label}", color=color, fontsize=10)
-            ax.axis("off")
+                ax.imshow(X_test[img_idx].reshape(28, 28), cmap='gray')
+                pred = y_pred[img_idx]
+                true = y_test[img_idx]
+                color = 'green' if pred == true else 'red'
+                ax.set_title(f"{pred}", color=color, fontweight='bold', fontsize=8)
+            ax.axis('off')
 
-        fig.suptitle("Vorhersagen (grün = korrekt, rot = falsch)", fontsize=14)
-        st.pyplot(fig)
+        plt.suptitle('Vorhersagen (grün = korrekt, rot = falsch)', fontweight='bold')
+        plt.tight_layout()
+        st.pyplot(fig_pred)
 
-    st.subheader("Wahrscheinlichkeiten pro Klasse")
-    img_idx = st.number_input("Bild-Index (0-9999)", 0, 9999, 0)
+# ═══════════════════════════════════════════════════════════════
+# Tab 4: Fehleranalyse
+# ═══════════════════════════════════════════════════════════════
+with tab4:
+    st.header("🔬 Fehleranalyse")
 
-    if st.button("Wahrscheinlichkeiten anzeigen"):
-        probs = model.predict_proba(X_test[img_idx:img_idx+1])[0]
+    if not st.session_state.model_trained:
+        st.warning("⚠️ Bitte zuerst das Modell trainieren (Tab 2)!")
+    else:
+        y_pred = st.session_state.y_pred
+        X_test = st.session_state.X_test
+        y_test = st.session_state.y_test
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+        errors = np.where(y_test != y_pred)[0]
+        n_errors = len(errors)
+        error_rate = n_errors / len(y_test)
 
-        ax1.imshow(X_test[img_idx].reshape(28, 28), cmap="gray")
-        ax1.set_title(f"Bild {img_idx} (True: {y_test[img_idx]})")
-        ax1.axis("off")
+        col_e1, col_e2 = st.columns(2)
+        col_e1.metric("Fehlklassifikationen", f"{n_errors:,} / {len(y_test):,}")
+        col_e2.metric("Fehlerrate", f"{error_rate:.2%}")
 
-        colors = ["#4ECDC4" if i != np.argmax(probs) else "#FF6B6B" for i in range(10)]
-        ax2.bar(range(10), probs, color=colors, edgecolor="white")
-        ax2.set_xlabel("Ziffer")
-        ax2.set_ylabel("Wahrscheinlichkeit")
-        ax2.set_title("Vorhergesagte Wahrscheinlichkeiten")
-        ax2.set_xticks(range(10))
+        st.subheader("Falsch klassifizierte Bilder")
+        n_mis = st.slider("Anzahl Fehler anzeigen", 5, 50, 20, key="mis_slider")
+        fig_mis = plot_misclassified(X_test, y_test, y_pred, n=n_mis)
+        if fig_mis:
+            st.pyplot(fig_mis)
 
-        st.pyplot(fig)
+        st.subheader("Fehler pro Ziffer")
+        error_by_digit = {}
+        for d in range(10):
+            mask = y_test == d
+            n_total = np.sum(mask)
+            n_wrong = np.sum(y_pred[mask] != d)
+            error_by_digit[d] = (n_wrong, n_total, n_wrong / n_total if n_total > 0 else 0)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FEHLERANALYSE
-# ═══════════════════════════════════════════════════════════════════════════
-elif page == "Fehleranalyse":
-    st.header("🔍 Fehleranalyse")
+        fig_err, ax_err = plt.subplots(figsize=(10, 4))
+        digits = list(range(10))
+        rates = [error_by_digit[d][2] for d in digits]
+        bars = ax_err.bar(digits, rates, color=['green' if r < 0.05 else 'orange' if r < 0.1 else 'red' for r in rates])
+        ax_err.set_xlabel('Ziffer')
+        ax_err.set_ylabel('Fehlerrate')
+        ax_err.set_title('Fehlerrate pro Ziffer', fontweight='bold')
+        ax_err.set_xticks(digits)
+        for bar, rate in zip(bars, rates):
+            ax_err.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.002,
+                        f'{rate:.1%}', ha='center', fontsize=9)
+        st.pyplot(fig_err)
 
-    @st.cache_data
-    def load_data():
-        return load_mnist()
+        st.subheader("Häufigste Verwechslungen")
+        error_pairs = {}
+        for err_idx in errors:
+            pair = (int(y_test[err_idx]), int(y_pred[err_idx]))
+            error_pairs[pair] = error_pairs.get(pair, 0) + 1
 
-    @st.cache_resource
-    def train_model():
-        X_train, y_train, X_test, y_test = load_data()
-        model = MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=20, random_state=42)
-        model.fit(X_train, y_train)
-        return model, X_test, y_test
+        sorted_pairs = sorted(error_pairs.items(), key=lambda x: x[1], reverse=True)[:10]
+        st.markdown("| Wahre Ziffer | Vorhergesagt | Anzahl |")
+        st.markdown("|-------------|-------------|--------|")
+        for (true, pred), count in sorted_pairs:
+            st.markdown(f"| {true} | {pred} | {count} |")
 
-    with st.spinner("Lade Daten & trainiere Modell..."):
-        model, X_test, y_test = train_model()
+st.sidebar.markdown("""
+### 📚 Über diese App
 
-    y_pred = model.predict(X_test)
-    errors = np.where(y_test != y_pred)[0]
-    error_rate = len(errors) / len(y_test)
+Interaktive Exploration des **MNIST-Datensatzes** —
+dem "Hello World" des Deep Learning.
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Test-Samples", f"{len(y_test):,}")
-    with col2:
-        st.metric("Fehler", f"{len(errors):,}")
-    with col3:
-        st.metric("Fehlerrate", f"{error_rate:.2%}")
+**Funktionen:**
+- 🔍 Datenverteilung & Beispiele erkunden
+- 🤖 MLPClassifier trainieren & evaluieren
+- 📊 Vorhersagen visualisieren
+- 🔬 Fehler systematisch analysieren
 
-    st.subheader("Falsch klassifizierte Bilder")
-    n_errors = st.slider("Anzahl Fehler anzeigen", 5, 30, 10)
-
-    if st.button("Fehler anzeigen"):
-        n_show = min(n_errors, len(errors))
-        error_idx = np.random.choice(errors, n_show, replace=False)
-
-        n_cols = min(n_show, 5)
-        n_rows = (n_show + n_cols - 1) // n_cols
-
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 2.5, n_rows * 2.5))
-        if n_rows == 1 and n_cols == 1:
-            axes = np.array([axes])
-        axes_flat = axes.flatten() if hasattr(axes, "flatten") else axes.flat
-
-        for i, ax in enumerate(axes_flat):
-            if i < n_show:
-                img_idx = error_idx[i]
-                ax.imshow(X_test[img_idx].reshape(28, 28), cmap="gray")
-                ax.set_title(f"True: {y_test[img_idx]} → Pred: {y_pred[img_idx]}",
-                            color="red", fontsize=10)
-            ax.axis("off")
-
-        fig.suptitle("Falsch klassifizierte Bilder", fontsize=14, color="red")
-        st.pyplot(fig)
-
-    st.subheader("Häufigste Verwechslungen")
-    if st.button("Verwechslungen analysieren"):
-        cm = confusion_matrix(y_test, y_pred)
-        # Diagonale auf 0 setzen (korrekte Klassifikationen ignorieren)
-        np.fill_diagonal(cm, 0)
-
-        # Top-10 Verwechslungen finden
-        flat_indices = np.argsort(cm.flatten())[-10:][::-1]
-        confusions = []
-        for idx in flat_indices:
-            true_class = idx // 10
-            pred_class = idx % 10
-            count = cm[true_class, pred_class]
-            if count > 0:
-                confusions.append((true_class, pred_class, count))
-
-        if confusions:
-            st.markdown("| Tatsächlich | Vorhergesagt | Anzahl |")
-            st.markdown("|------------|-------------|--------|")
-            for true_c, pred_c, count in confusions:
-                st.markdown(f"| {true_c} | {pred_c} | {count} |")
-        else:
-            st.info("Keine Verwechslungen gefunden!")
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("📚 **Handschrifterkennung MNIST**")
-st.sidebar.markdown("[GitHub Repository](https://github.com/mark-baumann/handschrifterkennung-mnist)")
+**Code:** `mnist_analysis.py` im Repo
+""")
