@@ -16,7 +16,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 import gzip
 import os
-from urllib import request
+from urllib.request import urlopen
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -24,6 +24,12 @@ from urllib import request
 # ═══════════════════════════════════════════════════════════════
 
 def load_mnist():
+    """Lädt den MNIST-Datensatz mit lokalem Caching.
+
+    Returns:
+        tuple: (X_train, y_train, X_test, y_test) als numpy-Arrays.
+            X: float32 [0,1], y: uint8 [0-9]
+    """
     cache_dir = os.path.join(os.path.dirname(__file__), ".mnist_cache")
     os.makedirs(cache_dir, exist_ok=True)
 
@@ -39,14 +45,23 @@ def load_mnist():
         path = os.path.join(cache_dir, fname)
         if not os.path.exists(path):
             print(f"  Lade {fname}...")
-            request.urlretrieve(base_url + fname, path)
+            try:
+                with urlopen(base_url + fname) as response:
+                    with open(path, "wb") as f:
+                        f.write(response.read())
+            except Exception as e:
+                raise RuntimeError(
+                    f"Fehler beim Download von {fname}: {e}"
+                ) from e
 
     def load_images(path):
+        """Lädt MNIST-Bilddaten aus einer IDX-Datei."""
         with gzip.open(path, "rb") as f:
             data = np.frombuffer(f.read(), np.uint8, offset=16)
         return data.reshape(-1, 784).astype(np.float32) / 255.0
 
     def load_labels(path):
+        """Lädt MNIST-Labeldaten aus einer IDX-Datei."""
         with gzip.open(path, "rb") as f:
             return np.frombuffer(f.read(), np.uint8, offset=8)
 
@@ -79,7 +94,8 @@ def plot_confusion(y_true, y_pred, title="Confusion Matrix"):
     cm = confusion_matrix(y_true, y_pred)
     fig, ax = plt.subplots(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax,
-                xticklabels=range(10), yticklabels=range(10))
+                xticklabels=[str(i) for i in range(10)],
+                yticklabels=[str(i) for i in range(10)])
     ax.set_xlabel("Predicted")
     ax.set_ylabel("True")
     ax.set_title(title)
@@ -130,6 +146,7 @@ def train_sklearn_mlp(X_train, y_train, X_test, y_test):
 # ═══════════════════════════════════════════════════════════════
 
 def main():
+    """Hauptprogramm: Lädt MNIST, trainiert MLP und erstellt Visualisierungen."""
     print("=" * 60)
     print("  Handschrifterkennung — MNIST Analyse")
     print("=" * 60)
