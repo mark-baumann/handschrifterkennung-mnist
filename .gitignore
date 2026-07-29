@@ -31,3 +31,4 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+wandb_runs/
