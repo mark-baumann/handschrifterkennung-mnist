@@ -157,11 +157,7 @@ class TestDatenKonsistenz:
         """Prüft, dass Trainings- und Testdaten disjunkt sind (Stichprobe)."""
         X_train, _, X_test, _ = mnist_data
 
-        # Vergleiche erste 1000 Samples (Hash-basiert)
-        train_hashes = set(
-            hash(X_train[i].tobytes()) for i in range(1000)
-        )
-        test_hashes = set(
-            hash(X_test[i].tobytes()) for i in range(1000)
-        )
-        assert train_hashes.isdisjoint(test_hashes)
+        # Vergleiche erste 1000 Samples byteweise (deterministisch)
+        train_bytes = {X_train[i].tobytes() for i in range(1000)}
+        test_bytes = {X_test[i].tobytes() for i in range(1000)}
+        assert train_bytes.isdisjoint(test_bytes)

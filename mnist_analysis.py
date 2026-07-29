@@ -108,10 +108,20 @@ def plot_misclassified(X, y_true, y_pred, n=10):
     if len(errors) == 0:
         print("Keine Fehler!")
         return None
-    idx = np.random.choice(errors, min(n, len(errors)), replace=False)
-    fig, axes = plt.subplots(2, 5, figsize=(12, 6))
-    for i, ax in enumerate(axes.flat):
-        if i < len(idx):
+    n_show = min(n, len(errors))
+    idx = np.random.choice(errors, n_show, replace=False)
+
+    # Dynamisches Grid: max 5 Spalten, so viele Zeilen wie nötig
+    n_cols = min(n_show, 5)
+    n_rows = (n_show + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 2.5, n_rows * 2.5))
+    # Stelle sicher, dass axes immer iterierbar ist
+    if n_rows == 1 and n_cols == 1:
+        axes = np.array([axes])
+    axes_flat = axes.flat if hasattr(axes, "flat") else axes.flatten()
+
+    for i, ax in enumerate(axes_flat):
+        if i < n_show:
             ax.imshow(X[idx[i]].reshape(28, 28), cmap="gray")
             ax.set_title(f"True: {y_true[idx[i]]} → Pred: {y_pred[idx[i]]}",
                         color="red")
