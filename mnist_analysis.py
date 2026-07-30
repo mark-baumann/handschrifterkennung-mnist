@@ -9,15 +9,15 @@ Vergleicht verschiedene Ansätze:
 Inklusive Visualisierung der Vorhersagen und Fehleranalyse.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import confusion_matrix, classification_report
-import seaborn as sns
 import gzip
 import os
 from urllib.request import urlopen
 
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.neural_network import MLPClassifier
 
 # ═══════════════════════════════════════════════════════════════
 # Daten laden
@@ -41,14 +41,13 @@ def load_mnist():
     }
     base_url = "https://storage.googleapis.com/cvdf-datasets/mnist/"
 
-    for name, fname in files.items():
+    for fname in files.values():
         path = os.path.join(cache_dir, fname)
         if not os.path.exists(path):
             print(f"  Lade {fname}...")
             try:
-                with urlopen(base_url + fname) as response:
-                    with open(path, "wb") as f:
-                        f.write(response.read())
+                with urlopen(base_url + fname) as response, open(path, "wb") as f:
+                    f.write(response.read())
             except Exception as e:
                 raise RuntimeError(
                     f"Fehler beim Download von {fname}: {e}"

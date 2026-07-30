@@ -4,17 +4,17 @@ Streamlit-App: Handschrifterkennung mit MNIST
 MNIST-Daten erkunden, Modell trainieren, Vorhersagen visualisieren, Fehleranalyse.
 """
 
-import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import confusion_matrix, classification_report
-import sys
 import os
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+import streamlit as st
+from sklearn.metrics import classification_report
+from sklearn.neural_network import MLPClassifier
 
 sys.path.insert(0, os.path.dirname(__file__))
-from mnist_analysis import load_mnist, plot_samples, plot_confusion, plot_misclassified
+from mnist_analysis import load_mnist, plot_confusion, plot_misclassified, plot_samples
 
 st.set_page_config(page_title="Handschrifterkennung MNIST", layout="wide")
 st.title("✍️ Handschrifterkennung mit MNIST")

@@ -2,13 +2,12 @@
 Tests für wandb_utils.py — W&B Experiment Tracking für MNIST-Handschrifterkennung.
 """
 
-import sys
 import os
-import pytest
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from wandb_utils import WandBTracker, WANDB_AVAILABLE
+from wandb_utils import WANDB_AVAILABLE, WandBTracker
 
 
 class TestWandBTracker:

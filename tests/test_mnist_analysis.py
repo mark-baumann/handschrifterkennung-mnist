@@ -3,16 +3,17 @@ Tests für die MNIST-Handschrifterkennung.
 
 Führt Tests für Datenladen, Visualisierung und Modelltraining aus.
 """
+import matplotlib
 import numpy as np
 import pytest
-import matplotlib
+
 matplotlib.use("Agg")  # Kein GUI-Backend nötig
 
 from mnist_analysis import (
     load_mnist,
-    plot_samples,
     plot_confusion,
     plot_misclassified,
+    plot_samples,
     train_sklearn_mlp,
 )
 

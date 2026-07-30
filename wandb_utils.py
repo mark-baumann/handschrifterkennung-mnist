@@ -13,7 +13,6 @@ Verwendung:
 
 import os
 import time
-from typing import Optional, List
 
 try:
     import wandb
@@ -36,11 +35,11 @@ class WandBTracker:
     def __init__(
         self,
         project: str = "mnist-handschrift",
-        config: Optional[dict] = None,
-        tags: Optional[list] = None,
-        group: Optional[str] = None,
+        config: dict | None = None,
+        tags: list | None = None,
+        group: str | None = None,
         job_type: str = "train",
-        notes: Optional[str] = None,
+        notes: str | None = None,
         offline: bool = False,
     ):
         self.project = project
@@ -68,13 +67,13 @@ class WandBTracker:
                             stderr=subprocess.DEVNULL,
                         ).decode().strip()
                         self.log({"git_commit": git_commit})
-                    except Exception:
+                    except Exception:  # noqa: S110, BLE001
                         pass
                 print(f"📊 W&B initialisiert (mode={mode}, project={project})")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(f"⚠️  W&B-Init fehlgeschlagen: {e}")
 
-    def log(self, metrics: dict, step: Optional[int] = None):
+    def log(self, metrics: dict, step: int | None = None):
         """Loggt Metriken zu W&B."""
         if self.run:
             self.run.log(metrics, step=step)
@@ -84,7 +83,7 @@ class WandBTracker:
         model_name: str,
         accuracy: float,
         train_time: float = 0.0,
-        params: Optional[dict] = None,
+        params: dict | None = None,
     ):
         """Loggt Ergebnisse eines Modells."""
         metrics = {
@@ -97,7 +96,7 @@ class WandBTracker:
         self.log(metrics)
 
     def log_confusion_matrix(self, model_name: str, y_true: list, y_pred: list,
-                             class_names: Optional[list] = None):
+                             class_names: list | None = None):
         """Loggt eine Confusion Matrix für ein Modell."""
         if not self.run:
             return
@@ -110,7 +109,7 @@ class WandBTracker:
                     class_names=class_names or [str(i) for i in range(10)],
                 )
             })
-        except Exception:
+        except Exception:  # noqa: S110, BLE001
             pass
 
     def log_misclassified(self, model_name: str, indices: list,
