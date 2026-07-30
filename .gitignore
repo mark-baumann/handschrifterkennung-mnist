@@ -32,4 +32,6 @@ dist/
 build/
 *.egg-info/
 wandb_runs/
+checkpoints/
+*.jsonl
 .pytest_cache/
