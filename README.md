@@ -1,33 +1,90 @@
-# Handschrifterkennung mit MNIST ✍️
+# ✍️ Handschrifterkennung mit MNIST
 
-**Vollständige Pipeline: Daten → Training → Evaluation → Visualisierung**
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-f7931e.svg)](https://scikit-learn.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B.svg)](https://streamlit.io/)
+[![Status](https://img.shields.io/badge/Status-Aktiv-brightgreen.svg)]()
 
-Dieses Repository demonstriert Handschrifterkennung auf dem MNIST-Datensatz mit verschiedenen Ansätzen — vom einfachen MLP bis zum CNN.
+Interaktive **Handschrifterkennung** mit dem klassischen MNIST-Datensatz. Erkunde die 70.000 handgeschriebenen Ziffern, trainiere ein MLP-Modell (Multi-Layer Perceptron), visualisiere Vorhersagen und analysiere Fehlklassifikationen — alles in einer übersichtlichen Streamlit-App.
 
-## 📦 Features
+## ✨ Features
 
-- **Daten-Pipeline**: Automatischer Download + Caching von MNIST
-- **scikit-learn MLP**: Schnelles Baseline-Modell
-- **Visualisierung**: Samples, Confusion Matrix, Fehleranalyse
-- **Vergleich**: Gegen unser selbstgebautes NN aus `neuronal-network-from-scratch`
+- **🔍 Daten erkunden** — MNIST-Bilder durchstöbern, Klassenverteilung und Pixelstatistiken anzeigen
+- **🤖 Modell trainieren** — MLPClassifier mit konfigurierbaren Hyperparametern (Hidden Layer, Learning Rate)
+- **📊 Vorhersagen visualisieren** — Zufällige Testbilder mit Modellvorhersage und Konfidenz anzeigen
+- **🔬 Fehleranalyse** — Confusion Matrix, falsch klassifizierte Beispiele und deren tatsächliche vs. vorhergesagte Klasse
+- **📈 Metriken** — Accuracy, Precision, Recall und F1-Score pro Ziffer
+- **✅ Vollständige Testabdeckung** — Unit-Tests für Analyse- und Utility-Funktionen
 
-## 🚀 Quickstart
+## 🚀 Installation
 
 ```bash
-uv pip install numpy matplotlib scikit-learn seaborn
-python mnist_analysis.py
+# Repository klonen
+git clone https://github.com/mark-baumann/handschrifterkennung-mnist.git
+cd handschrifterkennung-mnist
+
+# Virtuelle Umgebung erstellen
+uv venv
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate   # Windows
+
+# Abhängigkeiten installieren
+uv pip install -e ".[dev]"
 ```
 
-## 📊 Output
+## 🎯 Nutzung
 
-- `samples.png` — 10 zufällige MNIST-Bilder
-- `confusion_matrix.png` — Heatmap der Verwechslungen
-- `misclassified.png` — Falsch klassifizierte Beispiele
-- Classification Report (Precision/Recall/F1 pro Ziffer)
+```bash
+# Streamlit-App starten
+streamlit run app.py
+```
 
-## 🧠 Lernziele
+Die App öffnet sich im Browser unter `http://localhost:8501`. Durchlaufe die vier Tabs: Daten erkunden → Modell trainieren → Vorhersagen → Fehleranalyse.
 
-1. **Daten verstehen**: Was sind 28×28 Graustufenbilder?
-2. **Feature-Normalisierung**: Warum /255.0?
-3. **Overfitting erkennen**: Train vs. Test Accuracy
-4. **Fehleranalyse**: Welche Ziffern werden verwechselt? Warum?
+## 🧪 Tests ausführen
+
+```bash
+pytest tests/ -v
+```
+
+## 🛠️ Tech-Stack
+
+| Technologie | Einsatz |
+|-------------|---------|
+| **scikit-learn** | MLPClassifier, Metriken, Confusion Matrix |
+| **NumPy** | Datenverarbeitung und -transformation |
+| **Matplotlib** | Visualisierung von Ziffern und Diagrammen |
+| **Seaborn** | Heatmaps für Confusion Matrix |
+| **Pandas** | Datenstrukturen und -analyse |
+| **Streamlit** | Interaktive Web-App |
+| **Pytest** | Test-Framework |
+
+## 📁 Projektstruktur
+
+```
+handschrifterkennung-mnist/
+├── app.py                  # Streamlit-Hauptapp
+├── pyproject.toml          # Projekt-Konfiguration
+├── mnist_analysis.py       # Daten laden, Plots, Confusion Matrix
+├── wandb_utils.py          # W&B-Integration
+└── tests/
+    ├── test_mnist_analysis.py
+    └── test_wandb_utils.py
+```
+
+## 📖 Über den MNIST-Datensatz
+
+MNIST (Modified National Institute of Standards and Technology) enthält **70.000 handgeschriebene Ziffern** (0–9) in 28×28 Pixel Graustufen:
+
+- **60.000** Trainingsbilder
+- **10.000** Testbilder
+- 10 Klassen (Ziffern 0–9)
+- Jedes Bild: 784 Features (28×28 Pixel)
+
+## 👤 Autor
+
+**Mark Baumann** — [GitHub](https://github.com/mark-baumann)
+
+---
+
+*MNIST ist das „Hello World" des Machine Learning — ideal, um Klassifikation, Modell-Evaluation und Fehleranalyse zu lernen.*
