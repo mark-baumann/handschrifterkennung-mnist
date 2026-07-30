@@ -9,6 +9,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import streamlit as st
 from sklearn.metrics import classification_report
 from sklearn.neural_network import MLPClassifier
@@ -205,7 +206,6 @@ with tab3:
             report_df['F1-Score'].append(f"{report[key]['f1-score']:.3f}")
             report_df['Support'].append(int(report[key]['support']))
 
-        import pandas as pd
         st.dataframe(pd.DataFrame(report_df).set_index('Ziffer'), use_container_width=True)
 
         st.subheader("Zufällige Vorhersagen")
