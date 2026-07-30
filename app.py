@@ -143,8 +143,7 @@ with tab2:
                 verbose=False,
             )
 
-            # Manuelles Training mit Progress
-            model.partial_fit = False  # nicht partial_fit nutzen
+            # Training
             model.fit(X_train, y_train)
 
             progress_bar.progress(100)
