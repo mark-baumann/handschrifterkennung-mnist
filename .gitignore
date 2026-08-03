@@ -35,3 +35,5 @@ wandb_runs/
 checkpoints/
 *.jsonl
 .pytest_cache/
+.venv
+*.pyc
