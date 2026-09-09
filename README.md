@@ -1,22 +1,40 @@
 # ✍️ Handschrifterkennung mit MNIST
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mark-baumann/handschrifterkennung-mnist/blob/main/mnist_analyse.ipynb)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-f7931e.svg)](https://scikit-learn.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B.svg)](https://streamlit.io/)
+[![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626.svg)](https://jupyter.org/)
 [![Status](https://img.shields.io/badge/Status-Aktiv-brightgreen.svg)]()
 
-Interaktive **Handschrifterkennung** mit dem klassischen MNIST-Datensatz. Erkunde die 70.000 handgeschriebenen Ziffern, trainiere ein MLP-Modell (Multi-Layer Perceptron), visualisiere Vorhersagen und analysiere Fehlklassifikationen — alles in einer übersichtlichen Streamlit-App.
+**Handschrifterkennung** mit dem klassischen MNIST-Datensatz — direkt in **Google Colab**, ganz ohne App/GUI. Erkunde die 70.000 handgeschriebenen Ziffern, trainiere ein MLP-Modell (scikit-learn) und ein CNN (PyTorch), visualisiere Vorhersagen und analysiere Fehlklassifikationen.
 
 ## ✨ Features
 
 - **🔍 Daten erkunden** — MNIST-Bilder durchstöbern, Klassenverteilung und Pixelstatistiken anzeigen
-- **🤖 Modell trainieren** — MLPClassifier mit konfigurierbaren Hyperparametern (Hidden Layer, Learning Rate)
-- **📊 Vorhersagen visualisieren** — Zufällige Testbilder mit Modellvorhersage und Konfidenz anzeigen
+- **🤖 Modell trainieren** — MLPClassifier (scikit-learn) und CNN (PyTorch)
+- **📊 Vorhersagen visualisieren** — Testbilder mit Modellvorhersage und Konfidenz anzeigen
 - **🔬 Fehleranalyse** — Confusion Matrix, falsch klassifizierte Beispiele und deren tatsächliche vs. vorhergesagte Klasse
 - **📈 Metriken** — Accuracy, Precision, Recall und F1-Score pro Ziffer
 - **✅ Vollständige Testabdeckung** — Unit-Tests für Analyse- und Utility-Funktionen
 
-## 🚀 Installation
+## 🚀 In Google Colab ausführen
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mark-baumann/handschrifterkennung-mnist/blob/main/mnist_analyse.ipynb)
+
+Einfach oben auf das **„Open in Colab"**-Abzeichen klicken oder direkt öffnen:
+
+```text
+https://colab.research.google.com/github/mark-baumann/handschrifterkennung-mnist/blob/main/mnist_analyse.ipynb
+```
+
+Das Notebook ist **Google-Colab-fähig** und vollständig eigenständig:
+
+- Es erkennt automatisch, dass es in Colab läuft, und installiert fehlende Pakete (`numpy`, `matplotlib`, `seaborn`, `scikit-learn`, `torch`) selbst.
+- Der MNIST-Datensatz wird beim ersten Lauf automatisch heruntergeladen und gecacht.
+- Der PyTorch-CNN-Abschnitt wird übersprungen, falls `torch` nicht verfügbar ist.
+- Keine Installation, keine App, keine GUI — alle Zellen von oben nach unten ausführen.
+
+## 🖥️ Lokal (Notebook & Tests)
 
 ```bash
 # Repository klonen
@@ -32,16 +50,13 @@ source .venv/bin/activate  # Linux/macOS
 uv pip install -e ".[dev]"
 ```
 
-## 🎯 Nutzung
+### Jupyter-Notebook
 
 ```bash
-# Streamlit-App starten
-streamlit run app.py
+jupyter notebook mnist_analyse.ipynb
 ```
 
-Die App öffnet sich im Browser unter `http://localhost:8501`. Durchlaufe die vier Tabs: Daten erkunden → Modell trainieren → Vorhersagen → Fehleranalyse.
-
-## 🧪 Tests ausführen
+### Tests ausführen
 
 ```bash
 pytest tests/ -v
@@ -52,21 +67,21 @@ pytest tests/ -v
 | Technologie | Einsatz |
 |-------------|---------|
 | **scikit-learn** | MLPClassifier, Metriken, Confusion Matrix |
+| **PyTorch** | CNN-Training (optional, wird in Colab installiert) |
 | **NumPy** | Datenverarbeitung und -transformation |
 | **Matplotlib** | Visualisierung von Ziffern und Diagrammen |
 | **Seaborn** | Heatmaps für Confusion Matrix |
 | **Pandas** | Datenstrukturen und -analyse |
-| **Streamlit** | Interaktive Web-App |
 | **Pytest** | Test-Framework |
 
 ## 📁 Projektstruktur
 
 ```
 handschrifterkennung-mnist/
-├── app.py                  # Streamlit-Hauptapp
-├── pyproject.toml          # Projekt-Konfiguration
-├── mnist_analysis.py       # Daten laden, Plots, Confusion Matrix
-├── wandb_utils.py          # W&B-Integration
+├── mnist_analyse.ipynb      # Google-Colab-fähiges Notebook (Haupteinstiegspunkt)
+├── pyproject.toml           # Projekt-Konfiguration
+├── mnist_analysis.py        # Daten laden, Plots, Confusion Matrix
+├── wandb_utils.py           # W&B-Integration
 └── tests/
     ├── test_mnist_analysis.py
     └── test_wandb_utils.py
